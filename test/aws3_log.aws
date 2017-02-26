@@ -1,0 +1,47 @@
+#!/bin/sh
+mode=w
+
+path_log=/mnt/ssd1/aws/log/aws3
+tlog=1485940130
+
+channel imgr img
+
+cyc 0.05
+online no
+
+if [ $mode = w ]; then
+    echo "write log"
+    channel aws3par aws3par
+    channel aws3state aws3state
+    channel aws3cmd aws3cmd
+
+    filter gstcam gstcam -i -o
+    fset gstcam ch_out img
+    fset gstcam width 1920 height 1080
+    fset gstcam fppl /mnt/ssd1/aws/sample/bluerov.gst
+
+    filter aws3c aws3c -i -o
+    fset aws3c port 14550
+    fset aws3c ch_param aws3par ch_state aws3state ch_cmd aws3cmd
+    #fset aws3c verb yes
+
+    filter aws3_ui aws3ui -i -o
+    fset aws3ui ch_param aws3par ch_state aws3state ch_cmd aws3cmd ch_img img
+    fset aws3ui width 960 height 540
+    #fset aws3ui verb yes
+    fset aws3ui nz -500
+
+    filter write_ch_log log -i img -o
+    fset log path $path_log
+    go
+fi
+
+if [ $mode = r ]; then
+    echo "read log"
+    filter read_ch_log log -i -o img
+    fset log path $path_log
+
+    filter glimv win -i img -o
+    fset win width 960 height 540
+    go $tlog
+fi
